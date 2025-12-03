@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Prestamo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">BibliotecaSolidGoF</a> &gt; <a href="index.source.html" class="el_package">edu.pe.biblioteca.domain</a> &gt; <span class="el_source">Prestamo.java</span></div><h1>Prestamo.java</h1><pre class="source lang-java linenums">package edu.pe.biblioteca.domain;
+
+import edu.pe.biblioteca.strategy.PoliticaMulta;
+import edu.pe.biblioteca.strategy.ObservadorPrestamo;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class Prestamo {
+    private UUID id;
+    private Usuario usuario;
+    private MaterialBibliotecario material;
+    private LocalDate fechaPrestamo;
+    private LocalDate fechaDevolucionEsperada;
+    private LocalDate fechaDevolucionReal;
+<span class="fc" id="L17">    private boolean activo = true;</span>
+    private PoliticaMulta politicaMulta;
+<span class="fc" id="L19">    private List&lt;ObservadorPrestamo&gt; observadores = new ArrayList&lt;&gt;(); // ← OBSERVER</span>
+
+<span class="fc" id="L21">    public Prestamo(Usuario usuario, MaterialBibliotecario material, LocalDate fechaDevolucionEsperada) {</span>
+<span class="fc" id="L22">        this.id = UUID.randomUUID();</span>
+<span class="fc" id="L23">        this.usuario = usuario;</span>
+<span class="fc" id="L24">        this.material = material;</span>
+<span class="fc" id="L25">        this.fechaPrestamo = LocalDate.now();</span>
+<span class="fc" id="L26">        this.fechaDevolucionEsperada = fechaDevolucionEsperada;</span>
+<span class="fc" id="L27">        this.material.prestar();</span>
+<span class="fc" id="L28">        usuario.agregarPrestamo(this);</span>
+<span class="fc" id="L29">    }</span>
+
+    public UUID getId() {
+<span class="fc" id="L32">        return id;</span>
+    }
+
+    public Usuario getUsuario() {
+<span class="fc" id="L36">        return usuario;</span>
+    }
+
+    public MaterialBibliotecario getMaterial() {
+<span class="fc" id="L40">        return material;</span>
+    }
+
+    public LocalDate getFechaPrestamo() {
+<span class="fc" id="L44">        return fechaPrestamo;</span>
+    }
+
+    public LocalDate getFechaDevolucionEsperada() {
+<span class="fc" id="L48">        return fechaDevolucionEsperada;</span>
+    }
+
+    public LocalDate getFechaDevolucionReal() {
+<span class="fc" id="L52">        return fechaDevolucionReal;</span>
+    }
+
+    public boolean isActivo() {
+<span class="fc" id="L56">        return activo;</span>
+    }
+
+    public boolean estáVencido() {
+<span class="pc bpc" id="L60" title="1 of 4 branches missed.">        return activo &amp;&amp; LocalDate.now().isAfter(fechaDevolucionEsperada);</span>
+    }
+
+    public void devolverMaterial() {
+<span class="fc" id="L64">        this.fechaDevolucionReal = LocalDate.now();</span>
+<span class="fc" id="L65">        this.activo = false;</span>
+<span class="fc" id="L66">        this.material.devolver();</span>
+<span class="fc" id="L67">        notificarObservadores(&quot;devolucion&quot;); // ← NOTIFICAR</span>
+<span class="fc" id="L68">    }</span>
+
+    public long díasAtrasado() {
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (!estáVencido()) {</span>
+<span class="fc" id="L72">            return 0;</span>
+        }
+<span class="fc" id="L74">        return java.time.temporal.ChronoUnit.DAYS.between(fechaDevolucionEsperada, LocalDate.now());</span>
+    }
+
+    public void setPoliticaMulta(PoliticaMulta politica) {
+<span class="fc" id="L78">        this.politicaMulta = politica;</span>
+<span class="fc" id="L79">    }</span>
+
+    public double calcularMulta() {
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        if (politicaMulta == null) {</span>
+<span class="nc" id="L83">            return 0.0;</span>
+        }
+<span class="fc" id="L85">        return politicaMulta.calcularMulta(this);</span>
+    }
+
+    // ========== OBSERVER PATTERN ==========
+    
+    public void agregarObservador(ObservadorPrestamo observador) {
+<span class="fc" id="L91">        this.observadores.add(observador);</span>
+<span class="fc" id="L92">    }</span>
+
+    public void removerObservador(ObservadorPrestamo observador) {
+<span class="fc" id="L95">        this.observadores.remove(observador);</span>
+<span class="fc" id="L96">    }</span>
+
+    public void verificarVencimiento() {
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (estáVencido()) {</span>
+<span class="fc" id="L100">            notificarObservadores(&quot;vencimiento&quot;);</span>
+        }
+<span class="fc" id="L102">    }</span>
+
+    private void notificarObservadores(String tipo) {
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        for (ObservadorPrestamo obs : observadores) {</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">            if (&quot;vencimiento&quot;.equals(tipo)) {</span>
+<span class="fc" id="L107">                obs.prestamoVencido(this);</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">            } else if (&quot;devolucion&quot;.equals(tipo)) {</span>
+<span class="fc" id="L109">                obs.materialDevuelto(this);</span>
+            }
+<span class="fc" id="L111">        }</span>
+<span class="fc" id="L112">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

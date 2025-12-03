@@ -1,0 +1,5 @@
+edu\pe\biblioteca\domain\PrestamoTest.class
+edu\pe\biblioteca\factory\MaterialFactoryTest.class
+edu\pe\biblioteca\service\BibliotecaServiceTest.class
+edu\pe\biblioteca\strategy\StrategyTest.class
+edu\pe\biblioteca\domain\UsuarioTest.class

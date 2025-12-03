@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BibliotecaService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">BibliotecaSolidGoF</a> &gt; <a href="index.source.html" class="el_package">edu.pe.biblioteca.service</a> &gt; <span class="el_source">BibliotecaService.java</span></div><h1>BibliotecaService.java</h1><pre class="source lang-java linenums">package edu.pe.biblioteca.service;
+
+import edu.pe.biblioteca.domain.MaterialBibliotecario;
+import edu.pe.biblioteca.domain.Usuario;
+import edu.pe.biblioteca.domain.Prestamo;
+import edu.pe.biblioteca.strategy.ObservadorPrestamo;
+import edu.pe.biblioteca.adapter.ImportadorDatos;
+import edu.pe.biblioteca.factory.MaterialFactory;
+import edu.pe.biblioteca.strategy.PoliticaMulta;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * FACADE PATTERN: Encapsula la complejidad de:
+ * - Creación de materiales (Factory)
+ * - Gestión de préstamos
+ * - Cálculo de multas (Strategy)
+ * 
+ * Ventaja: UI/CLI solo llama a BibliotecaService, no toca detalles internos
+ * (OCP: puedo cambiar implementación sin afectar clientes)
+ * (SRP: BibliotecaService coordina, pero cada clase hace su trabajo)
+ */
+public class BibliotecaService {
+<span class="fc" id="L25">    private List&lt;MaterialBibliotecario&gt; materiales = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L26">    private List&lt;Usuario&gt; usuarios = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L27">    private List&lt;Prestamo&gt; prestamos = new ArrayList&lt;&gt;();</span>
+    private PoliticaMulta politicaMulta;
+
+<span class="fc" id="L30">    public BibliotecaService(PoliticaMulta politicaMulta) {</span>
+<span class="fc" id="L31">        this.politicaMulta = politicaMulta;</span>
+<span class="fc" id="L32">    }</span>
+
+    // ========== GESTIÓN DE MATERIALES ==========
+    
+    public MaterialBibliotecario registrarMaterial(String tipo, String titulo, 
+            String autor, LocalDate fecha, String... parametros) {
+<span class="fc" id="L38">        MaterialBibliotecario material = MaterialFactory.crearMaterial(tipo, titulo, autor, fecha, parametros);</span>
+<span class="fc" id="L39">        materiales.add(material);</span>
+<span class="fc" id="L40">        System.out.println(&quot;✓ Material registrado: &quot; + titulo + &quot; (&quot; + tipo + &quot;)&quot;);</span>
+<span class="fc" id="L41">        return material;</span>
+    }
+
+    public List&lt;MaterialBibliotecario&gt; listarMaterialesDisponibles() {
+<span class="fc" id="L45">        return materiales.stream()</span>
+<span class="fc" id="L46">                .filter(MaterialBibliotecario::isDisponible)</span>
+<span class="fc" id="L47">                .toList();</span>
+    }
+
+    // ========== GESTIÓN DE USUARIOS ==========
+    
+    public Usuario registrarUsuario(String nombre, String correo, String tipo) {
+<span class="fc" id="L53">        Usuario usuario = new Usuario(nombre, correo, tipo);</span>
+<span class="fc" id="L54">        usuarios.add(usuario);</span>
+<span class="fc" id="L55">        System.out.println(&quot;✓ Usuario registrado: &quot; + nombre + &quot; (&quot; + tipo + &quot;)&quot;);</span>
+<span class="fc" id="L56">        return usuario;</span>
+    }
+
+    public List&lt;Usuario&gt; listarUsuarios() {
+<span class="fc" id="L60">        return new ArrayList&lt;&gt;(usuarios);</span>
+    }
+
+    // ========== GESTIÓN DE PRÉSTAMOS ==========
+    
+    public Prestamo crearPrestamo(Usuario usuario, MaterialBibliotecario material, int díasMaximos) {
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (!material.isDisponible()) {</span>
+<span class="fc" id="L67">            throw new IllegalStateException(&quot;Material no disponible: &quot; + material.getTitulo());</span>
+        }
+        
+<span class="fc" id="L70">        Prestamo prestamo = new Prestamo(usuario, material, LocalDate.now().plusDays(díasMaximos));</span>
+<span class="fc" id="L71">        prestamo.setPoliticaMulta(politicaMulta);</span>
+<span class="fc" id="L72">        prestamos.add(prestamo);</span>
+        
+<span class="fc" id="L74">        System.out.println(&quot;✓ Préstamo creado: &quot; + usuario.getNombre() + &quot; → &quot; + material.getTitulo());</span>
+<span class="fc" id="L75">        return prestamo;</span>
+    }
+
+    public void devolverMaterial(Prestamo prestamo) {
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        if (!prestamo.isActivo()) {</span>
+<span class="nc" id="L80">            throw new IllegalStateException(&quot;Préstamo ya fue devuelto&quot;);</span>
+        }
+        
+<span class="fc" id="L83">        double multa = prestamo.calcularMulta();</span>
+<span class="fc" id="L84">        prestamo.devolverMaterial();</span>
+        
+<span class="fc" id="L86">        System.out.println(&quot;✓ Material devuelto: &quot; + prestamo.getMaterial().getTitulo());</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (multa &gt; 0) {</span>
+<span class="nc" id="L88">            System.out.println(&quot;  ⚠ Multa generada: S/. &quot; + multa);</span>
+        }
+<span class="fc" id="L90">    }</span>
+
+    public List&lt;Prestamo&gt; listarPrestamosActivos() {
+<span class="fc" id="L93">        return prestamos.stream()</span>
+<span class="fc" id="L94">                .filter(Prestamo::isActivo)</span>
+<span class="fc" id="L95">                .toList();</span>
+    }
+
+    public List&lt;Prestamo&gt; listarPrestamosVencidos() {
+<span class="nc" id="L99">        return prestamos.stream()</span>
+<span class="nc" id="L100">                .filter(Prestamo::estáVencido)</span>
+<span class="nc" id="L101">                .toList();</span>
+    }
+
+    // ========== REPORTES ==========
+    
+    public void generarReportePrestamos() {
+<span class="nc" id="L107">        System.out.println(&quot;\n=== REPORTE DE PRÉSTAMOS ===&quot;);</span>
+<span class="nc" id="L108">        System.out.println(&quot;Total de préstamos activos: &quot; + listarPrestamosActivos().size());</span>
+<span class="nc" id="L109">        System.out.println(&quot;Préstamos vencidos: &quot; + listarPrestamosVencidos().size());</span>
+<span class="nc" id="L110">        System.out.println(&quot;Materiales disponibles: &quot; + listarMaterialesDisponibles().size());</span>
+<span class="nc" id="L111">    }</span>
+
+    public void setPoliticaMulta(PoliticaMulta nuevaPolitica) {
+<span class="nc" id="L114">        this.politicaMulta = nuevaPolitica;</span>
+<span class="nc" id="L115">        System.out.println(&quot;✓ Política de multa actualizada&quot;);</span>
+<span class="nc" id="L116">    }</span>
+    
+    // En la clase, añade esto:
+
+
+
+    public void agregarObservadorPrestamo(Prestamo prestamo, ObservadorPrestamo observador) {
+<span class="nc" id="L123">        prestamo.agregarObservador(observador);</span>
+<span class="nc" id="L124">    }</span>
+
+    public void verificarPrestamosVencidos() {
+<span class="nc" id="L127">        System.out.println(&quot;\n--- Verificando préstamos vencidos ---&quot;);</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        for (Prestamo prestamo : prestamos) {</span>
+<span class="nc" id="L129">            prestamo.verificarVencimiento();</span>
+<span class="nc" id="L130">        }</span>
+<span class="nc" id="L131">    }</span>
+      public void importarMateriales(ImportadorDatos importador, String ruta) {
+<span class="nc" id="L133">        List&lt;MaterialBibliotecario&gt; importados = importador.importar(ruta);</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        for (MaterialBibliotecario material : importados) {</span>
+<span class="nc" id="L135">            materiales.add(material);</span>
+<span class="nc" id="L136">        }</span>
+<span class="nc" id="L137">    }</span>
+        public String generarReporte(GeneradorReporte generador) {
+<span class="fc" id="L139">        return generador.generar(prestamos);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

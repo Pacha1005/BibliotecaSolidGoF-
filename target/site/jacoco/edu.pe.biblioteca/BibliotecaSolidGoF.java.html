@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BibliotecaSolidGoF.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">BibliotecaSolidGoF</a> &gt; <a href="index.source.html" class="el_package">edu.pe.biblioteca</a> &gt; <span class="el_source">BibliotecaSolidGoF.java</span></div><h1>BibliotecaSolidGoF.java</h1><pre class="source lang-java linenums">package edu.pe.biblioteca;
+
+import edu.pe.biblioteca.domain.MaterialBibliotecario;
+import edu.pe.biblioteca.domain.Usuario;
+import edu.pe.biblioteca.domain.Prestamo;
+import edu.pe.biblioteca.service.BibliotecaService;
+import edu.pe.biblioteca.service.ReporteTexto;
+import edu.pe.biblioteca.service.ReporteCSV;
+import edu.pe.biblioteca.adapter.AdaptadorCSV;
+import edu.pe.biblioteca.adapter.AdaptadorJSON;
+import edu.pe.biblioteca.strategy.MultaPorDia;
+import edu.pe.biblioteca.strategy.MultaPorTramo;
+import edu.pe.biblioteca.strategy.NotificadorEmail;
+import edu.pe.biblioteca.strategy.LoggerEventos;
+import java.time.LocalDate;
+
+<span class="nc" id="L17">public class BibliotecaSolidGoF {</span>
+    public static void main(String[] args) {
+<span class="nc" id="L19">        System.out.println(&quot;=== SISTEMA DE BIBLIOTECA - SOLID + GoF ===\n&quot;);</span>
+        
+<span class="nc" id="L21">        BibliotecaService biblioteca = new BibliotecaService(new MultaPorDia(2.0));</span>
+        
+<span class="nc" id="L23">        MaterialBibliotecario libro = biblioteca.registrarMaterial(&quot;LIBRO&quot;,</span>
+<span class="nc" id="L24">                &quot;Clean Code&quot;, &quot;Robert C. Martin&quot;, LocalDate.of(2008, 8, 1),</span>
+                &quot;Programación&quot;);
+        
+<span class="nc" id="L27">        MaterialBibliotecario revista = biblioteca.registrarMaterial(&quot;REVISTA&quot;,</span>
+<span class="nc" id="L28">                &quot;Wired&quot;, &quot;Editor&quot;, LocalDate.of(2024, 11, 1),</span>
+                &quot;12&quot;, &quot;Condé Nast&quot;);
+        
+<span class="nc" id="L31">        System.out.println(&quot;\n--- Importando materiales (Adapter Pattern) ---&quot;);</span>
+<span class="nc" id="L32">        biblioteca.importarMateriales(new AdaptadorJSON(), &quot;datos.json&quot;);</span>
+        
+<span class="nc" id="L34">        Usuario usuario1 = biblioteca.registrarUsuario(&quot;Juan Pérez&quot;, &quot;juan@ejemplo.com&quot;, &quot;ESTUDIANTE&quot;);</span>
+<span class="nc" id="L35">        Usuario usuario2 = biblioteca.registrarUsuario(&quot;María López&quot;, &quot;maria@ejemplo.com&quot;, &quot;DOCENTE&quot;);</span>
+        
+<span class="nc" id="L37">        Prestamo prestamo1 = biblioteca.crearPrestamo(usuario1, libro, -5);</span>
+<span class="nc" id="L38">        Prestamo prestamo2 = biblioteca.crearPrestamo(usuario2, revista, 10);</span>
+        
+<span class="nc" id="L40">        System.out.println(&quot;\n--- Configurando observadores ---&quot;);</span>
+<span class="nc" id="L41">        NotificadorEmail notificador = new NotificadorEmail();</span>
+<span class="nc" id="L42">        LoggerEventos logger = new LoggerEventos();</span>
+        
+<span class="nc" id="L44">        biblioteca.agregarObservadorPrestamo(prestamo1, notificador);</span>
+<span class="nc" id="L45">        biblioteca.agregarObservadorPrestamo(prestamo1, logger);</span>
+        
+<span class="nc" id="L47">        biblioteca.verificarPrestamosVencidos();</span>
+        
+<span class="nc" id="L49">        biblioteca.setPoliticaMulta(new MultaPorTramo());</span>
+        
+<span class="nc" id="L51">        System.out.println(&quot;\n--- Devolución de material ---&quot;);</span>
+<span class="nc" id="L52">        biblioteca.devolverMaterial(prestamo1);</span>
+        
+        // TEMPLATE METHOD PATTERN: Generar reportes con diferentes formatos
+<span class="nc" id="L55">        System.out.println(&quot;\n--- TEMPLATE METHOD: Generando Reportes ---&quot;);</span>
+<span class="nc" id="L56">        System.out.println(&quot;\n📋 REPORTE EN TEXTO:&quot;);</span>
+<span class="nc" id="L57">        System.out.println(biblioteca.generarReporte(new ReporteTexto()));</span>
+        
+<span class="nc" id="L59">        System.out.println(&quot;\n📊 REPORTE EN CSV:&quot;);</span>
+<span class="nc" id="L60">        System.out.println(biblioteca.generarReporte(new ReporteCSV()));</span>
+        
+<span class="nc" id="L62">        System.out.println(&quot;✅ Patrones GoF implementados:&quot;);</span>
+<span class="nc" id="L63">        System.out.println(&quot;   1. Factory Method (creación de materiales)&quot;);</span>
+<span class="nc" id="L64">        System.out.println(&quot;   2. Strategy (políticas de multa)&quot;);</span>
+<span class="nc" id="L65">        System.out.println(&quot;   3. Facade (encapsulación de servicios)&quot;);</span>
+<span class="nc" id="L66">        System.out.println(&quot;   4. Observer (notificaciones)&quot;);</span>
+<span class="nc" id="L67">        System.out.println(&quot;   5. Adapter (importación de datos)&quot;);</span>
+<span class="nc" id="L68">        System.out.println(&quot;   6. Template Method (generación de reportes)&quot;);</span>
+<span class="nc" id="L69">        System.out.println(&quot;\n✅ MÍNIMO DE PATRONES ALCANZADO: 6/6 ✅&quot;);</span>
+<span class="nc" id="L70">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdaptadorCSV.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">BibliotecaSolidGoF</a> &gt; <a href="index.source.html" class="el_package">edu.pe.biblioteca.adapter</a> &gt; <span class="el_source">AdaptadorCSV.java</span></div><h1>AdaptadorCSV.java</h1><pre class="source lang-java linenums">package edu.pe.biblioteca.adapter;
+
+import edu.pe.biblioteca.domain.MaterialBibliotecario;
+import edu.pe.biblioteca.factory.MaterialFactory;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L13">public class AdaptadorCSV implements ImportadorDatos {</span>
+<span class="nc" id="L14">    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd&quot;);</span>
+
+    @Override
+    public List&lt;MaterialBibliotecario&gt; importar(String ruta) {
+<span class="nc" id="L18">        List&lt;MaterialBibliotecario&gt; materiales = new ArrayList&lt;&gt;();</span>
+        
+<span class="nc" id="L20">        try (BufferedReader reader = new BufferedReader(new FileReader(ruta))) {</span>
+            String linea;
+<span class="nc" id="L22">            boolean esEncabezado = true;</span>
+            
+<span class="nc bnc" id="L24" title="All 2 branches missed.">            while ((linea = reader.readLine()) != null) {</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">                if (esEncabezado) {</span>
+<span class="nc" id="L26">                    esEncabezado = false;</span>
+<span class="nc" id="L27">                    continue; // Saltar encabezado</span>
+                }
+                
+<span class="nc" id="L30">                MaterialBibliotecario material = parsearLineaCSV(linea);</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">                if (material != null) {</span>
+<span class="nc" id="L32">                    materiales.add(material);</span>
+                }
+<span class="nc" id="L34">            }</span>
+            
+<span class="nc" id="L36">            System.out.println(&quot;✓ Importados &quot; + materiales.size() + &quot; materiales desde CSV&quot;);</span>
+<span class="nc" id="L37">        } catch (IOException e) {</span>
+<span class="nc" id="L38">            System.err.println(&quot;✗ Error al leer CSV: &quot; + e.getMessage());</span>
+<span class="nc" id="L39">        }</span>
+        
+<span class="nc" id="L41">        return materiales;</span>
+    }
+
+    private MaterialBibliotecario parsearLineaCSV(String linea) {
+<span class="nc" id="L45">        String[] campos = linea.split(&quot;,&quot;);</span>
+        
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        if (campos.length &lt; 4) {</span>
+<span class="nc" id="L48">            return null;</span>
+        }
+        
+<span class="nc" id="L51">        String tipo = campos[0].trim();</span>
+<span class="nc" id="L52">        String titulo = campos[1].trim();</span>
+<span class="nc" id="L53">        String autor = campos[2].trim();</span>
+<span class="nc" id="L54">        LocalDate fecha = LocalDate.parse(campos[3].trim(), dateFormatter);</span>
+        
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (&quot;LIBRO&quot;.equals(tipo.toUpperCase())) {</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">            String categoria = campos.length &gt; 4 ? campos[4].trim() : &quot;General&quot;;</span>
+<span class="nc" id="L58">            return MaterialFactory.crearMaterial(&quot;LIBRO&quot;, titulo, autor, fecha, categoria);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        } else if (&quot;REVISTA&quot;.equals(tipo.toUpperCase())) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">            int numero = campos.length &gt; 4 ? Integer.parseInt(campos[4].trim()) : 1;</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">            String editorial = campos.length &gt; 5 ? campos[5].trim() : &quot;Desconocida&quot;;</span>
+<span class="nc" id="L62">            return MaterialFactory.crearMaterial(&quot;REVISTA&quot;, titulo, autor, fecha, String.valueOf(numero), editorial);</span>
+        }
+        
+<span class="nc" id="L65">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
